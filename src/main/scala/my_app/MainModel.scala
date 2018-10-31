@@ -1,0 +1,169 @@
+package citeLexicon 
+import com.thoughtworks.binding.{Binding, dom}
+import com.thoughtworks.binding.Binding.{BindingSeq, Var, Vars}
+import com.thoughtworks.binding.Binding.{Var, Vars}
+import com.thoughtworks.binding.dom
+import org.scalajs.dom.document
+import org.scalajs.dom.raw.Event
+import org.scalajs.dom.ext.Ajax
+import scala.concurrent
+              .ExecutionContext
+              .Implicits
+              .global
+
+import scala.scalajs.js
+import scala.scalajs.js._
+import edu.holycross.shot.cite._
+import js.annotation._
+import edu.holycross.shot.scm._
+import edu.holycross.shot.citejson._
+import edu.holycross.shot.citeobj._
+import scala.scalajs.js.Dynamic.{ global => g }
+
+
+@JSExportTopLevel("citeLexicon.MainModel")
+object MainModel {
+
+	val lexiconUrn:Cite2Urn = Cite2Urn("urn:cite2:hmt:lsj.markdown:")
+
+	val indexFile:String = "https://raw.githubusercontent.com/Eumaeus/cite_lsj_cex/master/lsj_index.txt"
+
+	case class LexIndex( selector:String, ucodeKey:String, betacodeKey:String, terms:String, weight:Option[Int] = None)
+
+
+	case class AlphaVolume( key:String, beta:String, selected:Boolean = false)
+
+	val validLexUrn = Var[Boolean](false)
+	val currentLexUrn = Var[Option[Cite2Urn]](None)
+	val mainIndex = Var[Option[Vector[LexIndex]]](None)
+	val shownIndex = Vars.empty[LexIndex]
+	val selectedInShownIndex = Var[Option[String]](None)
+	val alphaIndex = Vars.empty[AlphaVolume]
+	val activeVolume = Var[Option[AlphaVolume]](None)
+	val currentResults = Vars.empty[LexIndex]
+
+	val currentLexEntries = Vars.empty[CiteObject]
+
+	def updateLexEntries(vco:Vector[CiteObject]):Unit = {
+		currentLexEntries.value.clear
+		for (le <- vco) { currentLexEntries.value += le }
+	}
+
+	val alphaEntries:Vector[(String,String)] = {
+		Vector(("Αα","a"), ("Ββ","b"), ("Γγ","g"), ("Δδ","d"), ("Εε","e"), ("Ζζ","z"), ("Ηη","h"), ("Θθ","q"), ("Ιι","i"), ("Κκ","k"), ("Λλ","l"), ("Μμ","m"), ("Νν","n"), ("Ξξ","c"), ("Οο","o"), ("Ππ","p"), ("Ρρ","r"), ("Σς","s"), ("Ττ","t"), ("Υυ","u"), ("Φφ","f"), ("Χχ","x"), ("Ψψ","y"), ("Ωω","w") )
+	}
+
+
+	def loadAlphaIndex(ae:Vector[(String,String)], selectedOne:Option[String] = None) = {
+		alphaIndex.value.clear
+		for (v <- alphaEntries) {
+			selectedOne match {
+				case Some(so) => {
+					if (v._1 == so) alphaIndex.value += new AlphaVolume(v._1, v._2, true)
+					else alphaIndex.value += new AlphaVolume(v._1, v._2, false)
+				}
+				case _ => alphaIndex.value += new AlphaVolume(v._1, v._2, false)
+
+			}	
+		}
+	}
+
+	def clearSidebar:Unit = {
+		MainModel.shownIndex.value.clear 
+		MainModel.activeVolume.value = None
+		MainModel.clearActiveAlpha
+	}
+
+	def setActiveAlpha(s:String):Unit = {
+		val newVolume:AlphaVolume = alphaIndex.value.filter(_.key == s).toVector(0)
+		loadAlphaIndex(alphaEntries, Some(s))
+		MainModel.changeShownIndex(newVolume)
+	}
+
+	def clearActiveAlpha:Unit = {
+		loadAlphaIndex(alphaEntries, None)
+	}
+
+	def changeShownIndex(vol:AlphaVolume) = {
+		mainIndex.value match {
+			case None => shownIndex.value.clear
+			case Some(i) => {
+				val filteredIndex:Vector[LexIndex] = {
+					i.filter(_.betacodeKey(0) == vol.beta(0))
+					//Vector()
+				}
+				shownIndex.value.clear
+				for (i <- filteredIndex) {
+					shownIndex.value += i
+				}
+			}
+		}
+	}
+
+
+
+	/* Load LSJ Index String into a Vector[LexIndex] */
+	def updateIndex(contents:String):Unit = {
+		try {
+			val tempIndex:Vector[LexIndex] = {
+				contents.lines.map( is => {
+					val selector = is.split("#")(0)
+					val ucodeKey = is.split("#")(1)
+					val betacodeKey = is.split("#")(2) + " "
+					val terms = {
+						is.split("#").size match {
+							case n if (n < 4) => betacodeKey
+							case _ => is.split("#")(3) 
+						}
+					}
+					//val terms = is.split("#")(3)
+					new LexIndex(selector, ucodeKey, betacodeKey, terms)
+				}).toVector 
+			}
+			mainIndex.value = Some(tempIndex)
+			MainController.updateUserMessage(s"Loaded index to lexicon: ${mainIndex.value.get.size} entries.",0)
+			loadAlphaIndex(alphaEntries)
+		} catch {
+			case e:Exception => {
+				MainController.updateUserMessage(s"Error loading index: ${e}", 2)
+				g.console.log(s"${e}")
+			}
+		}
+	}
+
+	val serviceUrl= Var("")
+
+	val userMessage = Var("Main loaded.")
+	val userAlert = Var("default")
+	val userMessageVisibility = Var("app_hidden")
+
+	var msgTimer:scala.scalajs.js.timers.SetTimeoutHandle = null
+
+	val lexCandidates = Vars.empty[MainModel.LexIndex]
+
+	/* Should be in CiteLibrary: Given a URN and a property name, generate a property-level URN */
+	def propertyUrnFromPropertyName(urn:Cite2Urn, propName:String):Cite2Urn = {
+		val returnUrn:Cite2Urn = {
+			urn.propertyOption match {
+				case Some(po) => urn // just return it!
+				case None => {
+					val collUrn:Cite2Urn = urn.dropSelector
+					val collUrnString:String = collUrn.toString.dropRight(1) // remove colon
+					urn.objectComponentOption match {
+						case Some(oc) => {
+							Cite2Urn(s"${collUrnString}.${propName}:${oc}")
+						}
+						case None => {
+							Cite2Urn(s"${collUrnString}.${propName}:")
+						}
+					}
+				}
+			}
+		}
+		returnUrn
+	}	
+
+
+	
+
+}
