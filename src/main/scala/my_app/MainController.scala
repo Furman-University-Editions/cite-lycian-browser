@@ -40,6 +40,11 @@ object MainController {
 		// begin getting index	
 		updateUserMessage("Loading index to lexicon…",1)
 		loadIndex(MainModel.indexFile)
+		MainModel.requestParameterUrn.value = MainController.getRequestUrn
+		MainModel.requestParameterUrn.value match {
+			case Some(u) => MainController.initUrnQuery(u)
+			case _ => // do nothing
+		}
 	}
 
 	/*
@@ -171,6 +176,8 @@ object MainController {
 		}
 	}
 
+	/* Querying Methods */
+
 	def initLsjSingleQuery(idString:String):Unit = {
 
 		// Init query to get that going
@@ -223,9 +230,125 @@ object MainController {
 	def processLsj(jstring:String, urn:Option[Urn] = None):Unit = {
 		val objJson:CiteObjJson = CiteObjJson()
 		val vco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		MainController.updateUserMessage(s"Found: ${vco.size}.",1)
 		MainModel.updateLexEntries(vco)	
 	}
 
+	def initUrnQuery(urnString:String):Unit = {
+		try {
+			val u:Cite2Urn = Cite2Urn(urnString)
+			initUrnQuery(u)
+		} catch {
+			case e:Exception => MainController.updateUserMessage(s"Error retrieving ${urnString}: ${e}", 2)
+		}
+	}
+
+	def initUrnQuery(urn:Cite2Urn):Unit = {
+		try {
+			val lsjUrn:Cite2Urn = urn
+			val queryString:String = s"objects/${lsjUrn}"
+
+			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
+			val future = task.runAsync
+
+			// Deal with UI while we wait
+			val idString = {
+				if (lsjUrn.isRange) {
+					lsjUrn.rangeBegin
+				} else {
+					lsjUrn.objectComponent
+				}
+			}
+			MainModel.selectedInShownIndex.value = Some(idString)
+			// sideBar
+			MainModel.mainIndex.value match {
+				case None => // do nothing
+				case Some(mi) => {
+					val sideBarId:String = s"entry_${idString}"
+					val thisIndexEntry:Option[MainModel.LexIndex] = {
+						val matchedVec = mi.filter(_.selector == idString).toVector
+						if (matchedVec.size < 1) None else Some(matchedVec(0))
+					}
+					thisIndexEntry match {
+						case None => // do nothing
+						case Some(i) => {
+							val letter:Char = i.betacodeKey.toVector(0)
+							val alphaVolume:Option[MainModel.AlphaVolume] = {
+								val alphaVec:Vector[MainModel.AlphaVolume] = MainModel.alphaIndex.value.filter( _.beta.toVector(0).toString == letter.toString).toVector
+								if (alphaVec.size > 0) Some(alphaVec(0)) else None
+							}
+
+							alphaVolume match {
+								case Some(av) => {
+									MainModel.activeVolume.value = Some(av)
+									MainModel.setActiveAlpha(av.key)
+									// Scroll to it
+									MainView.scrollToItemInSidebar(sideBarId)
+								}
+								case _ => // do nothing
+							}
+						}
+					}
+
+				}
+			}
+
+		} catch {
+			case e:Exception => MainController.updateUserMessage(s"Error retrieving ${urn}: ${e}", 2)
+		}
+
+	}
+
+	def initTextQuery(s:String):Unit = {
+		try {
+			val queryString:String = s"objects/find/regexmatch/${MainModel.lexiconUrn}?find=[ *]${s}[ *,.;:]"
+			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(MainModel.lexiconUrn)) }
+			val future = task.runAsync
+			MainModel.clearSidebar
+		} catch {
+			case e:Exception => MainController.updateUserMessage(s"Error searching for ${s}: ${e}", 2)
+		}
+
+	}
+
+	def getRequestUrn:Option[Cite2Urn] = {
+	val currentUrl = js.Dynamic.global.location.href
+		val requestParamUrnString = currentUrl.toString.split('?')
+		val requestUrn:Option[Cite2Urn] = requestParamUrnString.size match {
+			case s if (s > 1) => {
+				try {
+					val parts = requestParamUrnString(1).split("=")
+					if ( parts.size > 1) {
+						if ( parts(0) == "urn" ) {
+							val decryptedString:String = js.URIUtils.decodeURIComponent(parts(1))
+							val decryptedUrn:Option[Cite2Urn] = {
+								parts(1).take(9) match {
+									case ("urn:cite2") => Some(Cite2Urn(decryptedString).dropProperty)
+									case _ => {
+										None
+									}
+								}
+							}
+							decryptedUrn
+						} else {
+							None
+						}
+					} else {
+						None
+					}
+				} catch {
+					case e:Exception => {
+						MainController.updateUserMessage(s"Failed to load request-parameter URN: ${e}",1)
+						None
+					}
+				}
+			}
+			case _  => {
+				None
+			}
+		}
+		requestUrn
+	}
 
 
 }

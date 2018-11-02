@@ -41,6 +41,7 @@ object MainModel {
 	val alphaIndex = Vars.empty[AlphaVolume]
 	val activeVolume = Var[Option[AlphaVolume]](None)
 	val currentResults = Vars.empty[LexIndex]
+    val requestParameterUrn = Var[Option[Cite2Urn]](None)
 
 	val currentLexEntries = Vars.empty[CiteObject]
 
@@ -72,6 +73,7 @@ object MainModel {
 		MainModel.shownIndex.value.clear 
 		MainModel.activeVolume.value = None
 		MainModel.clearActiveAlpha
+		MainModel.selectedInShownIndex.value = None
 	}
 
 	def setActiveAlpha(s:String):Unit = {
@@ -123,6 +125,11 @@ object MainModel {
 			mainIndex.value = Some(tempIndex)
 			MainController.updateUserMessage(s"Loaded index to lexicon: ${mainIndex.value.get.size} entries.",0)
 			loadAlphaIndex(alphaEntries)
+			// If there is a requst param, reload it now…
+			MainModel.requestParameterUrn.value match {
+				case Some(u) => MainController.initUrnQuery(u)
+				case _ => // do nothing
+			}
 		} catch {
 			case e:Exception => {
 				MainController.updateUserMessage(s"Error loading index: ${e}", 2)

@@ -20,15 +20,59 @@ code {
 	display: block;
 }
 
-div#greekOutput {
-	border: 1px solid red;
-	width: 10em;
-	height: 2em;
+span#greekOutput {
+	color: #666;
+}
+span#greekOutput:before {
+	content: "[ ";
+	color: silver;
+}
+
+span#greekOutput:after {
+	content: " ]";
+	color: silver;
+}
+
+div#searchDiv, div#searchEnglishDiv, div#passageInputDiv {
+	max-width: 18em;
+	display: block;
+}
+
+label.inputLabel {
+	display: block;
+	color: navy;
+	font-size: 85%;
+}
+
+div#searchDiv{
+	position: absolute;
+	top: 5em;
+	left: 15em;
+}
+
+div#searchEnglishDiv {
+	position: absolute;
+	top: 5em;
+	left: 33em;
+}
+
+div#passageInputDiv{
+	position: absolute;
+	top: 5em;
+	left: 50em;
+}
+
+button#searchButton, button#querySubmit {
+	display: block;
+	margin-left: 10em;
+}
+
+label {
+	color: #666;
 }
 
 div#lexiconDiv {
 	float:left;
-	margin-top: 1em;
 	max-width: 70%;
 }
 
@@ -36,13 +80,14 @@ div#lexiconDiv {
 div.lexEntryDiv {
 	border: 1px solid rgb(226, 226, 226);
 	border-radius: 8px;
-	padding: 1em;
+	padding: 0.5em 1em 0.5em 1em;
 	/*
 	background-color: rgb(254,247,245);
 	*/
 	background-color: rgb(246, 246, 246);
 	margin-bottom: 1em;
 	font-size: 150%;
+	width: 100%;
 }
 
 p.lexEntryLabel {
@@ -53,6 +98,11 @@ p.lexEntryLabel {
 	margin-top: 0.5em;
 }
 
+p.lexEntryUrnP {
+	float: right;
+	margin:0;
+}
+
 span.lexEntryUrn:after {
 	content: "📋";
 }
@@ -61,7 +111,6 @@ span.lexEntryUrn {
 	color: #444;
 	padding: 4px;
 	border: 1px dashed rgb(216, 216, 216);
-	float: right;
 	border-radius: 5px;
 	font: 12px 'Helvetica Neue', Helvetica, Arial, sans-serif;
 	background-color: rgb(236, 236, 236);
@@ -165,7 +214,8 @@ ul#resultsList {
 	font-size: 80%;
 	color: navy;
 	margin-left: 0;
-	padding-left: 1em;
+	padding-left: 0;
+	margin-top:	6em;
 	max-height: 8em;
 	overflow: scroll;
 	cursor: pointer;
@@ -186,7 +236,8 @@ ul#resultsList {
 		radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
 		radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
 	background-repeat: no-repeat;
-	background-color: white;
+	background-color: rgb(244, 244, 244);
+	border: 1px solid rgb(237, 237, 237);
 	background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
 	
 	/* Opera doesn't support this in the shorthand */
@@ -769,10 +820,13 @@ a:hover {
 
 .app_message {
 	max-width: 500px;
-	font-size: 65%;
+	font-size: 85%;
 	font-weight: normal;
 	min-height: 1em;
-	float: right;
+	position: absolute;
+	top: 5em;
+	right: 1em;
+	z-index: 100;
 	-webkit-transition: all 0.5s ease-out 1s;
 	-moz-transition: all 0.5s ease-out 1s;
 	-ms-transition: all 0.5s ease-out 1s;
@@ -790,15 +844,18 @@ a:hover {
 .app_message.default, #mainMessage.default {
 	border: 1px solid rgba(50, 161, 52, 0.5);
 	background-color: rgba(50, 161, 52, 0.2);
+	color: black;
 }
 .app_message.wait, #mainMessage.wait {
 	border: 1px solid rgba(247, 231, 131, 0.5);
 	background-color: rgba(247, 231, 131, 0.2);
+	color: black;
 }
 
 .app_message.warn, #mainMessage.warn {
 	border: 1px solid rgba(161, 50, 52, 0.5);
 	background-color: rgba(161, 50, 52, 0.2);
+	color: black;
 }
 
 #app_header_versionInfo {

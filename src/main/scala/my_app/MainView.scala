@@ -41,13 +41,14 @@ object MainView {
 		<header>
 			<em>A Greek-English Lexicon</em>, Henry George Liddell, Robert Scott, revised and augmented throughout by Sir Henry Stuart Jones with the assistance of Roderick McKenzie (Oxford: Clarendon Press. 1940).
 			<span id="app_header_versionInfo">CITE Version { BuildInfo.version }</span>
+			{ MainView.mainMessageDiv.bind }
 		</header>
 
 		<article id="main_Container">
 
 		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="http://folio.furman.edu">Furman Classics Projects</a> </p>
 
-		{ MainView.mainMessageDiv.bind }
+		
 		{ MainView.alphaList.bind }
 		{ MainView.volumeList.bind }
 		<div id="lexiconDiv">
@@ -55,6 +56,7 @@ object MainView {
 			{ MainView.resultsDiv.bind  }
 			{ MainView.entryDiv.bind  }
 		</div>
+		<textarea id="hiddenTextArea"></textarea>
 		</article>
 		 <div class="push"></div>
 		<footer>
@@ -122,9 +124,9 @@ object MainView {
 					val thisEntry:String = lex.propertyValue(entryPropertyUrn).asInstanceOf[String]
 					initiateMarked(s"${thisEntry}", s"lexEntry_${thisUrn}")
 					<div id={ s"lexEntryContainerDiv_${thisUrn}"} class="lexEntryDiv">
+						<p class="lexEntryUrnP">{ lexUrnElement(s"${thisUrn}" ).bind }</p>
 						<p class="lexEntryLabel">{ s"${thisLabel}" }</p>
 						<p class="lexEntry" id={ s"lexEntry_${thisUrn}" }>{ s"${thisEntry}" }</p>
-						<p class="lexEntryUrn">{ lexUrnElement(s"${thisUrn}" ).bind }</p>
 					</div>
 
 				}
@@ -135,7 +137,7 @@ object MainView {
 
 	@dom
 	def lexUrnElement(u:String) = {
-		<textarea id="hiddenTextArea"></textarea>
+		
 		<span class="lexEntryUrn" 
 			id={ "entryUrn_${s}" }>
 			<a
@@ -181,12 +183,23 @@ object MainView {
 
 	@dom
 	def searchDiv = {
+		
+		<div>
+		{ greekSearchForm.bind }	
+		{ englishSearchForm.bind }	
+		{ urnSearchForm.bind }
+		</div>
+		
+	}
+
+	@dom 
+	def greekSearchForm = {
 		val greekKeyUpHandler = { event: KeyboardEvent =>
 			(event.currentTarget, event.keyCode) match {
 				case(input: HTMLInputElement, _) =>  {
 					//O2Controller.validateUrn(s"${input.value.toString}")
 					js.Dynamic.global.document.getElementById("greekOutput").innerHTML = MainController.greekify(input.value.toString)
-					if (input.value.size > 2){
+					if (input.value.size > 1){
 						MainController.queryIndex(input.value.toString)
 					} else {
 						MainModel.currentResults.value.clear
@@ -196,21 +209,44 @@ object MainView {
 			}
 		}
 		<div id="searchDiv">
-		<label for="greekInput"> Search entries for: </label>
-		<input
-		class={ s"greekInputField" }
-		id="greekInput"
-		size={ 30 }
-		value=""
-		onkeyup={ greekKeyUpHandler }>
-		</input>	
-		Check beta-code entry:
-		<span id="greekOutput"></span>
+			<label class="inputLabel" for="greekInput">Search Greek: </label>
+			<input
+				class={ s"greekInputField" }
+				id="greekInput"
+				size={ 30 }
+				value=""
+				onkeyup={ greekKeyUpHandler }>
+			</input>	
+			<span id="greekOutput"></span>
 		</div>
 	}
 
 	@dom
-	def urnInput = {
+	def englishSearchForm = {
+		<div id="searchEnglishDiv">
+			<label class="inputLabel" for="englishInput">Search All Text: </label>
+			<input
+				class={ s"greekInputField" }
+				id="englishInput"
+				size={ 30 }
+				value="">
+			</input>	
+			<button 
+				id="searchButton"
+				onclick={ event: Event => {
+					MainController.updateUserMessage("Finding text in passages. Please be patient…",1)
+					val thisText:String = js.Dynamic.global.document.getElementById("englishInput").value.toString
+						
+					val task = Task{MainController.initTextQuery(thisText)}	
+					val future = task.runAsync
+				}
+			}
+			>Search All Text</button>
+		</div>	
+	}	
+
+	@dom
+	def urnSearchForm = {
 
 		val urnValidatingKeyUpHandler = { event: KeyboardEvent =>
 			(event.currentTarget, event.keyCode) match {
@@ -232,11 +268,11 @@ object MainView {
 			}
 		}
 		<div id="passageInputDiv">
-			<label for="passageInput"
+			<label  for="passageInput"
 				class={
 					MainModel.validLexUrn.bind match {
-						case true => "validPassage"
-						case false => "invalidPassage"
+						case true => "validPassage inputLabel"
+						case false => "invalidPassage inputLabel"
 					}					
 				}	
 			> Retrieve by URN: </label>
@@ -262,11 +298,11 @@ object MainView {
 		id="querySubmit"
 		disabled={ MainModel.validLexUrn.bind == false }
 			onclick={ event: Event => {
-					MainController.updateUserMessage("Finding folios for passage. Please be patient…",1)
+					MainController.updateUserMessage("Finding entry for URN. Please be patient…",1)
 					val thisEntry:String = js.Dynamic.global.document.getElementById("passageInput").value.toString
-						
-					//val task = Task{MainController.queryValidReff(thisPassage)}	
-					//val future = task.runAsync
+					g.console.log(thisEntry)	
+					val task = Task{MainController.initUrnQuery(thisEntry)}	
+					val future = task.runAsync
 				}
 			}
 		>{ if (MainModel.validLexUrn.bind){
