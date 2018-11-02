@@ -88,6 +88,7 @@ div.lexEntryDiv {
 	margin-bottom: 1em;
 	font-size: 150%;
 	width: 100%;
+	min-width: 25em;
 }
 
 p.lexEntryLabel {

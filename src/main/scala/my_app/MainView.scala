@@ -46,7 +46,7 @@ object MainView {
 
 		<article id="main_Container">
 
-		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="http://folio.furman.edu">Furman Classics Projects</a> </p>
+		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="https://eumaeus.github.io/2018/10/30/lsj.html">About this project</a> </p>
 
 		
 		{ MainView.alphaList.bind }
