@@ -9,15 +9,31 @@ p#menu {
 }
 
 .greekFont {
-	font-family: "EB Garamond", "Times", serif;
+	font-family: "AnaktoriaRegular", "EB Garamond",  "LinuxLibertineORegular", "AseaRegular", "Times", serif;
 }
 
 code {
-	font-family: "EB Garamond", "Times", serif;
+	font-family: "AnaktoriaRegular", "EB Garamond", "LinuxLibertineORegular", "AseaRegular", "Times", serif;
 	color: rgb(182, 0, 0);
 	font-weight: bold;
 	padding-right: 0.5em;
 	display: block;
+}
+
+span.lsjpn {
+	font-size: 50%;
+	color: #666;
+	display:block;
+}
+
+span.lsjpn:before {
+	content: "p. ";
+	color: #777;
+}
+
+span.lsjpn:after {
+	content: " in the 1940 ed.";
+	color: #777;
 }
 
 span#greekOutput {
@@ -216,7 +232,7 @@ ul#resultsList {
 	color: navy;
 	margin-left: 0;
 	padding-left: 0;
-	margin-top:	6em;
+	margin-top:	7em;
 	max-height: 8em;
 	overflow: scroll;
 	cursor: pointer;

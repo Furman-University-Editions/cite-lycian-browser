@@ -20,6 +20,22 @@ code {
 	display: block;
 }
 
+span.lsjpn {
+	font-size: 50%;
+	color: #666;
+	display:block;
+}
+
+span.lsjpn:before {
+	content: "p. ";
+	color: #777;
+}
+
+span.lsjpn:after {
+	content: " in the 1940 ed.";
+	color: #777;
+}
+
 span#greekOutput {
 	color: #666;
 }
