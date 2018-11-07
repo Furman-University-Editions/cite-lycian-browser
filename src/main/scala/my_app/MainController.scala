@@ -42,7 +42,9 @@ object MainController {
 		loadIndex(MainModel.indexFile)
 		MainModel.requestParameterUrn.value = MainController.getRequestUrn
 		MainModel.requestParameterUrn.value match {
-			case Some(u) => MainController.initUrnQuery(u)
+			case Some(u) => {
+				MainController.initUrnQuery(u)
+			}
 			case _ => // do nothing
 		}
 	}
@@ -67,7 +69,7 @@ object MainController {
 	def validatePassage(urnString:String):Boolean = {
 		try {
 			val u:Cite2Urn = Cite2Urn(urnString)
-			if (u.toString.contains("urn:cite2:hmt:lsj.markdown:")) {
+			if (u.toString.contains("urn:cite2:hmt:lsj.chicago_md:")) {
 				if (u.objectComponentOption == None) false else true
 			} else {
 				false			
@@ -176,17 +178,23 @@ object MainController {
 		}
 	}
 
+
 	/* Querying Methods */
 
-	def initLsjSingleQuery(idString:String):Unit = {
+	def initLsjSingleQuery(idString:String, clearBubbles:Boolean = false):Unit = {
 
 		// Init query to get that going
 
 		val lsjUrn:Cite2Urn = MainModel.lexiconUrn.addSelector(idString)
 		val queryString:String = s"objects/${lsjUrn}"
 
-		val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
-		val future = task.runAsync
+		if (clearBubbles){
+			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
+			val future = task.runAsync
+		} else {
+			val task = Task{ MainController.getJson(callback = MainController.processResult, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
+			val future = task.runAsync
+		}
 
 		// Deal with UI while we wait
 		MainModel.selectedInShownIndex.value = Some(idString)
@@ -229,7 +237,18 @@ object MainController {
 
 	def processLsj(jstring:String, urn:Option[Urn] = None):Unit = {
 		val objJson:CiteObjJson = CiteObjJson()
-		val vco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val unsortedvco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val vco:Vector[CiteObject] = unsortedvco.sortBy(_.propertyValue(MainModel.sortProperty).asInstanceOf[Int])
+		MainController.updateUserMessage(s"Found: ${vco.size}.",1)
+		MainModel.updateLexEntries(vco)	
+		MainModel.updateBubbles(vco)	
+	}
+
+	// this one doesn't clear result bubbles
+	def processResult(jstring:String, urn:Option[Urn] = None):Unit = {
+		val objJson:CiteObjJson = CiteObjJson()
+		val unsortedvco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val vco:Vector[CiteObject] = unsortedvco.sortBy(_.propertyValue(MainModel.sortProperty).asInstanceOf[Int])
 		MainController.updateUserMessage(s"Found: ${vco.size}.",1)
 		MainModel.updateLexEntries(vco)	
 	}
@@ -245,7 +264,25 @@ object MainController {
 
 	def initUrnQuery(urn:Cite2Urn):Unit = {
 		try {
-			val lsjUrn:Cite2Urn = urn
+			val tempUrn:Cite2Urn = urn
+			// Sort out versions
+			val lsjUrn:Cite2Urn = {
+			tempUrn.versionOption match {
+					case Some(v) => {
+						urn.objectComponentOption match {
+							case None => tempUrn.dropVersion.addVersion(MainModel.supportedVersion).dropSelector.addSelector(urn.objectComponent)
+							case Some(oc) => tempUrn.dropVersion.addVersion(MainModel.supportedVersion).dropSelector.addSelector(urn.objectComponent)
+						}
+					}
+					case None => {
+						urn.objectComponentOption match {
+							case None => tempUrn.addVersion(MainModel.supportedVersion).addSelector(urn.objectComponent)
+							case Some(oc) => tempUrn.addVersion(MainModel.supportedVersion)
+						}
+					}
+				}
+			}
+
 			val queryString:String = s"objects/${lsjUrn}"
 
 			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
@@ -323,7 +360,13 @@ object MainController {
 							val decryptedString:String = js.URIUtils.decodeURIComponent(parts(1))
 							val decryptedUrn:Option[Cite2Urn] = {
 								parts(1).take(9) match {
-									case ("urn:cite2") => Some(Cite2Urn(decryptedString).dropProperty)
+									case ("urn:cite2") => {
+										val u:Cite2Urn = Cite2Urn(decryptedString)
+										u.propertyOption match {
+											case Some(po) => Some(u.dropProperty)
+											case None => Some(u) 
+										}
+									}
 									case _ => {
 										None
 									}

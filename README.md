@@ -1,4 +1,4 @@
-# citeLexicon
+# CITE LSJ Browser
 
 A single-page web-application for navigating the [LSJ Lexicon CITE Service](http://folio2.furman.edu/lex/). It draws data from a [SCS-Akka Microservice](https://github.com/cite-architecture/Server-CITE-App), (examples at <http://beta.hpcc.uh.edu/hmt/hmt-microservice/>).
 
@@ -6,7 +6,7 @@ The instance of the SCS-Akka service serving the LSJ as a CITE Collection offers
 
 ## Current Version
 
-1.1.1
+1.2.2
 
 ## License
 

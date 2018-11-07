@@ -9,11 +9,13 @@ p#menu {
 }
 
 .greekFont {
-	font-family: "EB Garamond", "Times", serif;
+	 font-family: "EB Garamond",  "LinuxLibertineORegular", "AseaRegular", "Times", serif; 
+	/* font-family: system-ui; */
 }
 
 code {
-	font-family: "EB Garamond", "Times", serif;
+	font-family: "EB Garamond", "LinuxLibertineORegular", "AseaRegular", "Times", serif;
+	font-family: system-ui;
 	color: rgb(182, 0, 0);
 	font-weight: bold;
 	padding-right: 0.5em;
@@ -69,13 +71,13 @@ div#searchDiv{
 div#searchEnglishDiv {
 	position: absolute;
 	top: 5em;
-	left: 33em;
+	left: 36em;
 }
 
 div#passageInputDiv{
 	position: absolute;
 	top: 5em;
-	left: 50em;
+	left: 55em;
 }
 
 button#searchButton, button#querySubmit {
@@ -232,7 +234,7 @@ ul#resultsList {
 	color: navy;
 	margin-left: 0;
 	padding-left: 0;
-	margin-top:	6em;
+	margin-top:	7em;
 	max-height: 8em;
 	overflow: scroll;
 	cursor: pointer;
@@ -281,33 +283,17 @@ ul#volumeList {
 	width: 9em;
 	margin-right: 1em;
 	height: 550px;
-	overflow: scroll;
+	/* overflow: scroll; */
 
-	background:
-	/* Shadow covers */
-	linear-gradient(white 30%, rgba(255,255,255,0)),
-	linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
+	border-top: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
 
-	/* Shadows */
-	radial-gradient(50% 0, farthest-side, rgba(0,0,0,.2), rgba(0,0,0,0)),
-	radial-gradient(50% 100%,farthest-side, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-	background:
-	/* Shadow covers */
-	linear-gradient(white 30%, rgba(255,255,255,0)),
-	linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
-
-	/* Shadows */
-	radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-	radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-	background-repeat: no-repeat;
-	background-color: white;
-	background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-	
-	/* Opera doesn't support this in the shorthand */
-	background-attachment: local, local, scroll, scroll;
 
 }
 
+ul#volumeList.long {
+	overflow: scroll;
+}
 ul#alphaList li, ul#volumeList li {
 	margin-left: 0;
 	padding-left: 0;
