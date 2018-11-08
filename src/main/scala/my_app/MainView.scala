@@ -165,23 +165,28 @@ object MainView {
 		
 		<span class="lexEntryUrn" 
 			id={ "entryUrn_${s}" }>
-			<a
+			<a 
 			  onclick={ event: Event => {
 				val thisTarget = event.target.asInstanceOf[org.scalajs.dom.raw.HTMLAnchorElement]
 				val selectedText:String = thisTarget.text
 			    val hiddenTextArea = js.Dynamic.global.document.getElementById("hiddenTextArea")
-			    hiddenTextArea.textContent = selectedText.trim
+			    hiddenTextArea.textContent = selectedText.trim.dropRight(1)
+			    hiddenTextArea.focus()
 			    hiddenTextArea.select()
-			    val successful = document.execCommand("copy")
-				successful match {
-					case true => {
-						val message:String = s"""Copied "${selectedText}" to clipboard."""
-						MainController.updateUserMessage(message, 0)
+			    try {
+				    val successful = document.execCommand("copy")
+					successful match {
+						case true => {
+							val message:String = s"""Copied "${selectedText}" to clipboard."""
+							MainController.updateUserMessage(message, 0)
+						}
+						case false => {
+							val message:String = s"""Failed to copy "${selectedText}" to clipboard."""
+							MainController.updateUserMessage(message, 2)
+						}
 					}
-					case false => {
-						val message:String = s"""Failed to copy "${selectedText}" to clipboard."""
-						MainController.updateUserMessage(message, 2)
-					}
+				} catch {
+					case e:Exception => g.console.log(s"${e}")		
 				}
 			}}	> { u } </a></span>
 

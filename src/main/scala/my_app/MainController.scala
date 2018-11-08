@@ -62,7 +62,7 @@ object MainController {
 			case 2 => MainModel.userAlert.value = "warn"
 		}
 		js.timers.clearTimeout(MainModel.msgTimer)
-		MainModel.msgTimer = js.timers.setTimeout(10000){ MainModel.userMessageVisibility.value = "app_hidden" }
+		MainModel.msgTimer = js.timers.setTimeout(4000){ MainModel.userMessageVisibility.value = "app_hidden" }
 	}
 
 	/* Validates URN */
