@@ -170,7 +170,7 @@ object MainView {
 				val thisTarget = event.target.asInstanceOf[org.scalajs.dom.raw.HTMLAnchorElement]
 				val selectedText:String = thisTarget.text
 			    val hiddenTextArea = js.Dynamic.global.document.getElementById("hiddenTextArea")
-			    hiddenTextArea.textContent = selectedText.trim.dropRight(1)
+			    hiddenTextArea.textContent = selectedText.trim
 			    hiddenTextArea.focus()
 			    hiddenTextArea.select()
 			    try {
