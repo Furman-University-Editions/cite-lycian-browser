@@ -6,7 +6,7 @@ The instance of the SCS-Akka service serving the LSJ as a CITE Collection offers
 
 ## Current Version
 
-1.2.2
+1.4.0
 
 ## License
 

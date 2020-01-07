@@ -61,7 +61,7 @@ object MainView {
 
 		<article id="main_Container">
 
-		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="https://eumaeus.github.io/2018/10/30/lsj.html">About this project</a> | <a href="http://folio2.furman.edu/lewis-short/index.html">The Lewis &amp; Short Latin Dictionary</a></p>
+		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Architecture</a> | <a href="https://eumaeus.github.io/2018/10/30/lsj.html">About this project</a> | <a href="http://folio2.furman.edu/lewis-short/index.html">The Lewis &amp; Short Latin Dictionary</a></p>
 
 		
 		{ MainView.alphaList.bind }
@@ -72,11 +72,13 @@ object MainView {
 			{ MainView.entryDiv.bind  }
 		</div>
 		<textarea id="hiddenTextArea"></textarea>
+	
 		</article>
-		 <div class="push"></div>
-		<footer>
+		<div class="push"></div>
+		<div class="small-print">
 		{ footer.bind }
-		</footer>
+		</div> 
+		
 	</div>
 	}
 
@@ -149,7 +151,13 @@ object MainView {
 					val thisEntry:String = lex.propertyValue(entryPropertyUrn).asInstanceOf[String]
 					initiateMarked(s"${thisEntry}", s"lexEntry_${thisUrn}")
 					<div id={ s"lexEntryContainerDiv_${thisUrn}"} class="lexEntryDiv">
-						<p class="lexEntryUrnP">{ lexUrnElement(s"${thisUrn}" ).bind }</p>
+						<p class="lexEntryLinkP">{
+							lexUrnLink(s"${thisUrn}" ).bind 
+							}
+						</p>
+						<p class="lexEntryUrnP">{ 
+							lexUrnElement(s"${thisUrn}" ).bind 
+						}</p>
 						<p class="lexEntryLabel">{ s"${thisLabel}" }</p>
 						<p class="lexEntry" id={ s"lexEntry_${thisUrn}" }>{ s"${thisEntry}" }</p>
 					</div>
@@ -161,20 +169,32 @@ object MainView {
 	}
 
 	@dom
+	def lexUrnLink(u:String) = {
+		<span class="lexEntryLink" id= { s"entryLink_${u}" }>
+			{
+				var url:String = js.Dynamic.global.location.href.toString.split('?')(0)
+				val wholeUrl:String = s"${url}?urn=${u}"
+				<a href={ wholeUrl }>Link</a>
+			}
+		</span>
+	}
+
+	@dom
 	def lexUrnElement(u:String) = {
 		
 		<span class="lexEntryUrn" 
-			id={ "entryUrn_${s}" }>
+			id={ s"entryUrn_${u}" }>
 			<a 
 			  onclick={ event: Event => {
 				val thisTarget = event.target.asInstanceOf[org.scalajs.dom.raw.HTMLAnchorElement]
 				val selectedText:String = thisTarget.text
-			    val hiddenTextArea = js.Dynamic.global.document.getElementById("hiddenTextArea")
-			    hiddenTextArea.textContent = selectedText.trim
-			    hiddenTextArea.focus()
-			    hiddenTextArea.select()
-			    try {
-				    val successful = document.execCommand("copy")
+
+			  val hiddenTextArea = js.Dynamic.global.document.getElementById("hiddenTextArea")
+			  hiddenTextArea.textContent = selectedText.trim
+			  hiddenTextArea.focus()
+			  hiddenTextArea.select()
+			  try {
+			    val successful = document.execCommand("copy")
 					successful match {
 						case true => {
 							val message:String = s"""Copied "${selectedText}" to clipboard."""
