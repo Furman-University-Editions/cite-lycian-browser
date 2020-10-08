@@ -1,6 +1,6 @@
 # CITE Lycian Lexicon
 
-TBD.
+A fork of the CITE LSJ app. TBD.
 
 ## Current Version
 
